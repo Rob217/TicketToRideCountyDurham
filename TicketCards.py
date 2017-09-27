@@ -1,6 +1,7 @@
 # File for creating ticket cards for Ticket to Ride:County Durham
 # Copyright (2017) Robert Bettles
 
+# import modules
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import matplotlib.text as text
@@ -65,9 +66,6 @@ for line in dataFile:
                 stationPosYList.append(cyVal)
 
     lineInd += 1
-
-
-# stationPosXList = np.array(stationPosXList[1:]) # ignore final entry
 stationPosYList = 804.33073 - np.array(stationPosYList)
 maxPos = np.max([np.max(stationPosXList),np.max(stationPosYList)])
 stationPosXList = stationPosXList/maxPos
@@ -177,11 +175,10 @@ for iPage in range(nPages):
                         horizontalalignment='center')
 
                 # find station locations
-
                 destination1Index = stationList.index(routeListStart[iCard])
                 destination2Index = stationList.index(routeListEnd[iCard])
 
-                # stations
+                # draw stations
                 for iStation in range(len(stationPosXList)):
                     stationPosX = xPos - cardInnerW/2 + 0.015 + stationPosXList[iStation]*cardInnerW*0.86
                     stationPosY = yPos - cardInnerH/2 + 0.033 + stationPosYList[iStation]*cardInnerH*0.9
@@ -196,6 +193,7 @@ for iPage in range(nPages):
                         )
                     )
 
+                    # highlight destination stations
                     if iStation == destination1Index or iStation == destination2Index:
                         ax.add_patch(
                             patches.Ellipse(
@@ -210,8 +208,7 @@ for iPage in range(nPages):
 
             iCard += 1
 
-
-    # fig1.savefig('Tickets.png', dpi=90, bbox_inches='tight')
+    # save tickets to file
     fig.savefig('Tickets_%d.pdf' % (iPage+1))
 
     plt.draw()
