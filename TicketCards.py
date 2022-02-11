@@ -1,5 +1,10 @@
 # File for creating ticket cards for Ticket to Ride:County Durham
-# Copyright (2017) Robert Bettles
+# Copyright (2022) Robert Bettles
+#
+# CHANGELOG
+#
+# Feb 2022
+# Updated script from Python 2 to Python 3
 
 # import modules
 import matplotlib.pyplot as plt
@@ -22,50 +27,50 @@ fig.add_axes(ax)
 
 
 # extract station positions
-dataFile = file('TicketToRideCountyDurham.svg')
-stationList = []
-stationPosXList = []
-stationPosYList = []
-lineInd = 1
-circleInd = 1e10
-loopThroughCircleLines = 0
-for line in dataFile:
-    if '<circle' in line:
-        circleInd = lineInd
-        loopThroughCircleLines = 1
-        isThisCircleAStation = 0
+with open('TicketToRideCountyDurham.svg', 'r') as dataFile:
+    stationList = []
+    stationPosXList = []
+    stationPosYList = []
+    lineInd = 1
+    circleInd = 1e10
+    loopThroughCircleLines = 0
+    for line in dataFile:
+        if '<circle' in line:
+            circleInd = lineInd
+            loopThroughCircleLines = 1
+            isThisCircleAStation = 0
 
-    if loopThroughCircleLines == 1:
-        if 'station:' in line:
-            isThisCircleAStation = 1
+        if loopThroughCircleLines == 1:
+            if 'station:' in line:
+                isThisCircleAStation = 1
 
-            # find station name index in line
-            stationStringInd = line.find('station:')
+                # find station name index in line
+                stationStringInd = line.find('station:')
 
-            # extract station name
-            stationName = line[stationStringInd+8:-2]
+                # extract station name
+                stationName = line[stationStringInd+8:-2]
 
-            # replace _ with space
-            stationName = stationName.replace('_',' ')
+                # replace _ with space
+                stationName = stationName.replace('_',' ')
 
-            # save station name to list
-            stationList.append(stationName)
+                # save station name to list
+                stationList.append(stationName)
 
-        elif 'cx="' in line:
-            cxInd = line.find('cx')
-            cxVal = float(line[cxInd+4:-2])
-        elif 'cy="' in line:
-            cyInd = line.find('cy')
-            cyVal = float(line[cyInd+4:-2])
+            elif 'cx="' in line:
+                cxInd = line.find('cx')
+                cxVal = float(line[cxInd+4:-2])
+            elif 'cy="' in line:
+                cyInd = line.find('cy')
+                cyVal = float(line[cyInd+4:-2])
 
-        if '/>' in line:
-            loopThroughCircleLines = 0
+            if '/>' in line:
+                loopThroughCircleLines = 0
 
-            if isThisCircleAStation == 1:
-                stationPosXList.append(cxVal)
-                stationPosYList.append(cyVal)
+                if isThisCircleAStation == 1:
+                    stationPosXList.append(cxVal)
+                    stationPosYList.append(cyVal)
 
-    lineInd += 1
+        lineInd += 1
 stationPosYList = 804.33073 - np.array(stationPosYList)
 maxPos = np.max([np.max(stationPosXList),np.max(stationPosYList)])
 stationPosXList = stationPosXList/maxPos
@@ -73,17 +78,32 @@ stationPosYList = stationPosYList/maxPos
 
 
 # extract routes
-ifile = open("RouteList.csv", 'rb')
-reader = csv.reader(ifile)
-rownum = 0
-routeListStart = []
-routeListEnd = []
-routeListValue = []
-for row in reader:
-    routeListStart.append(row[0])
-    routeListEnd.append(row[1])
-    routeListValue.append(row[2])
-ifile.close()
+with open("RouteList.csv", 'r') as ifile:
+    reader = csv.reader(ifile)
+    rownum = 0
+    routeListStart = []
+    routeListEnd = []
+    routeListValue = []
+    for row in reader:
+        routeListStart.append(row[0])
+        routeListEnd.append(row[1])
+        routeListValue.append(row[2])
+
+# check for missing stations (probably due to mislabeling on the .svg map)
+if set(stationList) != set(routeListStart).union(set(routeListEnd)):
+    missing_stations = set(routeListStart).union(set(routeListEnd)) - set(stationList)
+    print("Warning: station list does not match stations in route list!")
+    print(f"Missing stations {missing_stations}")
+    print("Dropping these stations from routes")
+
+    routeList = [
+        (a, b, v) for a, b, v in zip(routeListStart, routeListEnd, routeListValue)
+        if a not in missing_stations and b not in missing_stations
+    ]
+    routeListStart = [a for a, b, v in routeList]
+    routeListEnd = [b for a, b, v in routeList]
+    routeListValue = [v for a, b, v in routeList]
+
 nRoutes = len(routeListStart)
 
 
@@ -112,7 +132,7 @@ for iPage in range(nPages):
     for ii in range(3):
         for jj in range(3):
 
-            print 'Card %d/%d' % (iCard,len(routeListValue))
+            print(f'Card {iCard}/{len(routeListValue)}')
 
             if iCard < nRoutes:
 
@@ -212,7 +232,7 @@ for iPage in range(nPages):
     fig.savefig('Tickets_%d.pdf' % (iPage+1))
 
     plt.draw()
-    plt.pause(1) # <-------
-    raw_input("<Hit Enter To Continue>")
+    # plt.pause(1) # <-------
+    # raw_input("<Hit Enter To Continue>")
 
 plt.close(fig)
