@@ -1,6 +1,9 @@
 # File for creating ticket cards for Ticket to Ride:County Durham
 # Copyright (2022) Robert Bettles
 #
+# Requirements:
+# Python3
+#
 # CHANGELOG
 #
 # Feb 2022
